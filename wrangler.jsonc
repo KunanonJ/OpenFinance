@@ -2,9 +2,6 @@
   "name": "chameleon-finance",
   "pages_build_output_dir": "dist",
   "compatibility_date": "2025-12-12",
-  "build": {
-    "command": "npm run build"
-  },
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS",
