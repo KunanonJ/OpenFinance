@@ -185,3 +185,29 @@ export async function readTrends(spreadsheetId) {
     lastModified: row[4] || new Date().toISOString()
   }));
 }
+
+/**
+ * Read financial records from Google Sheet
+ */
+export async function readFinancialRecords(spreadsheetId, sheetTab = 'Sheet1') {
+  const rows = await fetchSheet(spreadsheetId, sheetTab);
+  const dataRows = rows.slice(1);
+
+  return dataRows.map((row, i) => ({
+    id: `sheet_${i}_${Date.now()}`,
+    date: row[0] || '',
+    description: row[1] || '',
+    interestRate: parseFloat(row[2]) || 0,
+    income: parseFloat(row[3]) || 0,
+    expenses: parseFloat(row[4]) || 0,
+    minimumExpenses: parseFloat(row[5]) || 0,
+    balance: parseFloat(row[6]) || 0,
+    dueDate: row[7] || '',
+    paymentMethod: row[8] || '',
+    howPaid: row[9] || '',
+    done: row[10] === 'true' || row[10] === 'TRUE' || row[10] === 'Yes',
+    type: row[11] || '',
+    note: row[12] || '',
+    lastModified: new Date().toISOString(),
+  })).filter(r => r.date && r.description);
+}

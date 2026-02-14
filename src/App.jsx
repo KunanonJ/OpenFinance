@@ -18,6 +18,7 @@ import TrendsSection from '@features/trends/TrendsSection';
 import UpcomingRenewals from '@features/reminders/UpcomingRenewals';
 import SyncIndicator from '@features/sync/SyncIndicator';
 import SettingsModal from '@features/settings/SettingsModal';
+import FinanceSection from '@features/finance/FinanceSection';
 
 export default function App() {
   useTheme();
@@ -35,6 +36,7 @@ export default function App() {
   const [editId, setEditId] = useState(null);
   const [preset, setPreset] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('subscriptions');
 
   useEffect(() => {
     initRates();
@@ -97,7 +99,7 @@ export default function App() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl dark:text-slate-100">Chameleon</h1>
           <div className="mt-1 flex items-center gap-3">
-            <p className="text-sm text-slate-400 dark:text-slate-500">Subscription Cost Visualizer</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">Personal Finance Tracker</p>
             <SyncIndicator />
           </div>
         </div>
@@ -113,8 +115,32 @@ export default function App() {
         </button>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="mb-6 flex rounded-xl bg-slate-100 p-1 dark:bg-slate-700">
+        <button
+          onClick={() => setActiveTab('subscriptions')}
+          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'subscriptions'
+              ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          Subscriptions
+        </button>
+        <button
+          onClick={() => setActiveTab('finance')}
+          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'finance'
+              ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          Finance
+        </button>
+      </div>
+
       {/* Step 1: Subscription Management */}
-      {step === 1 && (
+      {activeTab === 'subscriptions' && step === 1 && (
         <div className="space-y-6">
           <SubscriptionList onEdit={handleEdit} onOpenModal={handleOpenModal} />
 
@@ -146,7 +172,7 @@ export default function App() {
       )}
 
       {/* Step 2: Visualization Dashboard */}
-      {step === 2 && (
+      {activeTab === 'subscriptions' && step === 2 && (
         <div className="space-y-6">
           {/* Back + View Toggle */}
           <div className="flex items-center justify-between">
@@ -202,6 +228,9 @@ export default function App() {
           </button>
         </div>
       )}
+
+      {/* Finance Section */}
+      {activeTab === 'finance' && <FinanceSection />}
 
       {/* Modals */}
       <AddSubscriptionModal

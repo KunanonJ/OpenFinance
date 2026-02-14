@@ -1,10 +1,15 @@
 # Chameleon
 
-A subscription cost tracker and visualizer built with React. See where your money goes each month through interactive treemaps, beeswarm charts, circle packs, and Sankey diagrams -- with optional Google Sheets sync and mobile support via Capacitor.
+A personal finance tracker built with React. Track subscriptions and financial records, visualize spending through interactive treemaps, beeswarm charts, circle packs, and Sankey diagrams -- with optional Google Sheets sync and mobile support via Capacitor.
 
 ## Features
 
 - **Subscription Tracking** -- Add, edit, and delete subscriptions with price, currency, billing cycle, and category
+- **Financial Records** -- Track income, expenses, loans, and credit card payments with due dates, payment methods, and balance tracking
+- **Finance Summary** -- Real-time summary cards showing total income, expenses, minimum expenses, and net balance
+- **Finance Filters** -- Filter records by type (Income, Utility, Loan, Credit Card) and date range (This Month, Last Month, This Year)
+- **Finance Google Sheets Sync** -- Import financial data from a shared Google Sheets template
+- **Finance Template** -- One-click copy of a pre-built Google Sheets template for quick setup
 - **Visual Dashboards** -- Treemap, beeswarm, circle pack, and Sankey diagram views of your spending
 - **Sankey Diagram** -- Income flow visualization showing how money flows from income through categories to individual subscriptions
 - **Budget Alerts** -- Set monthly budget limits with threshold warnings (safe / warning / caution / danger)
@@ -72,22 +77,53 @@ Chameleon can pull data from a public Google Sheet. No API key needed.
 
 Conflict resolution uses last-write-wins by timestamp. If both local and cloud versions were modified within 60 seconds, a dialog lets you choose which to keep.
 
+## Financial Records
+
+The Finance tab lets you track income, expenses, loans, and credit card payments alongside your subscriptions.
+
+### Finance Google Sheets Template
+
+A pre-built template is available for quick setup:
+
+1. In the Finance tab, click **Template** to copy the Google Sheets template to your account
+2. Fill in your financial records in the sheet
+3. Share it as **"Anyone with the link can view"**
+4. Connect it in Settings and click **Sync** to import
+
+**Finance tab columns** (row 1 = headers):
+
+| Date | Description | Interested Rate | Income | Expenses | Minimum Expenses | Balance | Due Date | Payment Method | How I paid? | Done? | Type | Note |
+|------|-------------|-----------------|--------|----------|------------------|---------|----------|----------------|-------------|-------|------|------|
+| 2026-01-15 | Monthly Salary | 0 | 5000 | 0 | 0 | 5000 | | Direct Deposit | Auto | true | Income | |
+| 2026-01-20 | Electric Bill | 0 | 0 | 150 | 100 | 0 | 2026-02-01 | Bank Transfer | Online | false | Utility | |
+
+**Supported types**: Income, Utility, Loan, Credit Card
+
 ## Project Structure
 
 ```
 src/
   main.jsx                          # React entry point
-  App.jsx                           # Root component (step 1/2 views)
+  App.jsx                           # Root component (tab navigation + views)
   index.css                         # Tailwind CSS + custom styles
   store/
     subscriptionStore.js            # Zustand store (subs CRUD, income, persistence)
     currencyStore.js                # Zustand store (currency, exchange rates, IP detection)
     settingsStore.js                # Zustand store (theme, persistence)
+    financeStore.js                 # Zustand store (finance records CRUD, filters, persistence)
   features/
     subscriptions/
       SubscriptionList.jsx          # Subscription card list
       SubscriptionCard.jsx          # Individual subscription card
       AddSubscriptionModal.jsx      # Add/edit subscription form modal
+    finance/
+      FinanceSection.jsx            # Main finance container
+      FinanceSummary.jsx            # Income/expense/balance summary cards
+      FinanceToolbar.jsx            # Export CSV, Copy Template, Sync buttons
+      FinanceList.jsx               # Filtered record list with type/date filters
+      FinanceRecordCard.jsx         # Individual finance record card
+      FinanceRecordModal.jsx        # Add/edit finance record form modal
+      useFinanceSheetsSync.js       # Finance Sheets sync hook
     budget/
       BudgetIndicator.jsx           # Dashboard budget progress bar
       BudgetSettings.jsx            # Budget amount settings UI
@@ -127,6 +163,8 @@ src/
       categories.js                 # Category definitions + auto-detection
       currencies.js                 # Currency formatting + conversion
       constants.js                  # Colors, logo API config
+      financeConstants.js           # Finance types, payment methods, template URLs
+      financeUtils.js               # Finance summary, filtering, CSV export/import
       presets.js                    # Preset subscription templates
       utils.js                     # escapeHtml, extractDomain, etc.
       analytics.js                 # Client analytics
@@ -138,7 +176,8 @@ src/
   test/
     setup.js                       # Vitest setup (localStorage mock, etc.)
 e2e/
-  app.spec.js                       # Playwright E2E tests (28 tests)
+  app.spec.js                       # Playwright E2E tests -- subscriptions (28 tests)
+  finance.spec.js                   # Playwright E2E tests -- finance + tabs (26 tests)
 ```
 
 ## Testing
@@ -163,13 +202,15 @@ npm run test:e2e
 | useTrends.test.js | 24 | History, MoM/YoY, chart data, CSV export |
 | categories.test.js | 21 | Auto-categorization, filtering, spending |
 | settingsStore.test.js | 14 | Theme toggle, persistence, legacy compat |
+| financeStore.test.js | 14 | Finance CRUD, filters, persistence |
+| financeUtils.test.js | 19 | Summary, filtering, CSV export/import |
 | sheetsApi.test.js | 17 | CSV parsing, connection, data reading |
 | syncManager.test.js | 10 | Merge logic, conflict detection, state |
 | offlineQueue.test.js | 14 | Queue CRUD, processing, stats |
 | sheets-e2e.test.js | 28 | Full sync flows, queue integration |
 | + 7 more | 33 | XSS, DOM safety, storage errors, rates, validation |
 
-**Unit total: 205 tests across 16 suites**
+**Unit total: 238 tests across 18 suites**
 
 ### E2E Tests
 
@@ -183,8 +224,16 @@ npm run test:e2e
 | Budget Settings | 3 | Set budget, dashboard display, remove |
 | Theme Toggle | 1 | Dark/light switch |
 | Full User Flow | 2 | Complete flow, data persistence |
+| Tab Navigation | 5 | Tab switching, state independence |
+| Finance Empty State | 6 | Summary cards, empty list, toolbar, filters |
+| Finance Add Record | 4 | Modal, income/expense, validation |
+| Finance Record Management | 3 | Edit, delete, multiple records |
+| Finance Filters | 3 | Type filtering, All reset |
+| Finance Summary | 1 | Summary card updates |
+| Finance Persistence | 2 | Reload persistence, data independence |
+| Finance Full Flow | 1 | Add, filter, edit, delete, persist |
 
-**E2E total: 28 tests**
+**E2E total: 54 tests**
 
 ## Mobile (Capacitor)
 
