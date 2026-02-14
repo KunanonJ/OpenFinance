@@ -111,6 +111,12 @@ A pre-built template is available for quick setup:
 
 **Supported types**: Income, Utility, Loan, Credit Card
 
+**Finance import behavior**
+- Column mapping is header-based (not fixed index), so `Income` and `Expenses` are read from their named columns even if columns are reordered.
+- Header row is auto-detected (supports title rows above the headers).
+- Common header variants are supported, including `Interested Rate`, `How I paid?`, `Done?`, and typo variants like `Income Collumn` / `Expenses Collumn`.
+- Number parsing handles formatted values like `5,000`, currency symbols, and localized decimal separators.
+
 ## Project Structure
 
 ```

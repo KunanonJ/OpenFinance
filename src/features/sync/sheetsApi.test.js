@@ -9,6 +9,7 @@ import {
   readSubscriptions,
   readBudget,
   readTrends,
+  readFinancialRecords,
 } from './sheetsApi';
 
 describe('Sheets API', () => {
@@ -204,6 +205,61 @@ describe('Sheets API', () => {
       expect(budget.amount).toBe(100.5);
       expect(budget.currency).toBe('EUR');
       expect(budget.lastModified).toBe('2024-06-01T00:00:00.000Z');
+    });
+  });
+
+  // --- readFinancialRecords ---
+
+  describe('readFinancialRecords', () => {
+    beforeEach(() => {
+      global.fetch = vi.fn();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    // SA-18
+    it('maps income and expenses from header names even when title row exists', async () => {
+      const csvText = [
+        '"My Finance Tracker"',
+        '"Date","Description","Income","Expenses","Type"',
+        '"2026-02-01","Salary","5,000","0","Income"',
+        '"2026-02-02","Rent","0","1,250","Utility"',
+      ].join('\n');
+
+      global.fetch.mockResolvedValue({
+        ok: true,
+        text: async () => csvText,
+      });
+
+      const records = await readFinancialRecords('fakeId', 'Sheet1');
+      expect(records).toHaveLength(2);
+      expect(records[0].income).toBe(5000);
+      expect(records[0].expenses).toBe(0);
+      expect(records[1].income).toBe(0);
+      expect(records[1].expenses).toBe(1250);
+    });
+
+    // SA-19
+    it('supports common misspelling variants for Income/Expenses column headers', async () => {
+      const csvText = [
+        '"Date","Description","Income Collumn","Expenses Collumn"',
+        '"2026-03-01","Consulting","1200","0"',
+        '"2026-03-02","Groceries","0","320"',
+      ].join('\n');
+
+      global.fetch.mockResolvedValue({
+        ok: true,
+        text: async () => csvText,
+      });
+
+      const records = await readFinancialRecords('fakeId', 'Sheet1');
+      expect(records).toHaveLength(2);
+      expect(records[0].income).toBe(1200);
+      expect(records[0].expenses).toBe(0);
+      expect(records[1].income).toBe(0);
+      expect(records[1].expenses).toBe(320);
     });
   });
 });

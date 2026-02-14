@@ -197,6 +197,18 @@ App.jsx (tab router: Finance Tracker | Subscriptions)
 - **Conflict window**: If both local and cloud modified within 60 seconds, user chooses
 - **Sheet tabs read**: `Subscriptions`, `Budget`, `Trends`, `Sheet1` (finance)
 
+### Finance Sheet Import Rules (`readFinancialRecords`)
+
+- Header-based mapping is used for finance fields, so `Income` and `Expenses` are imported from named columns (not fixed column positions).
+- Header row is auto-detected within the first few rows to support sheets with a title row above headers.
+- Supported header variants include:
+  - `Interested Rate` / `Interest Rate`
+  - `How I paid?`
+  - `Done?`
+  - typo variants like `Income Collumn` / `Expenses Collumn`
+- Number parsing accepts common formatted values (commas, currency symbols, localized decimal formats).
+- Legacy fallback index mapping remains in place for older templates.
+
 ### Credential Storage
 
 localStorage key: `_sheets_config` stores `{ spreadsheetId, sheetsUrl, connectedAt }`

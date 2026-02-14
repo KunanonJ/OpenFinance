@@ -186,6 +186,129 @@ export async function readTrends(spreadsheetId) {
   }));
 }
 
+const FINANCE_COLUMN_ALIASES = {
+  date: ['date', 'transactiondate', 'recorddate'],
+  description: ['description', 'details', 'item', 'name'],
+  interestRate: ['interestrate', 'interestedrate', 'rate'],
+  income: ['income', 'incomes', 'incomeamount', 'incomecolumn', 'incomecollumn'],
+  expenses: ['expenses', 'expense', 'expenseamount', 'expensescolumn', 'expensescollumn'],
+  minimumExpenses: ['minimumexpenses', 'minexpenses', 'minimumexpense', 'minexpense'],
+  balance: ['balance', 'netbalance', 'remainingbalance'],
+  dueDate: ['duedate', 'due'],
+  paymentMethod: ['paymentmethod', 'payment'],
+  howPaid: ['howpaid', 'howipaid', 'paidby'],
+  done: ['done', 'isdone', 'completed'],
+  type: ['type', 'category'],
+  note: ['note', 'notes', 'remark', 'remarks'],
+};
+
+const FINANCE_FALLBACK_INDEX = {
+  date: 0,
+  description: 1,
+  interestRate: 2,
+  income: 3,
+  expenses: 4,
+  minimumExpenses: 5,
+  balance: 6,
+  dueDate: 7,
+  paymentMethod: 8,
+  howPaid: 9,
+  done: 10,
+  type: 11,
+  note: 12,
+};
+
+function normalizeHeader(value) {
+  return (value || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/^\uFEFF/, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function parseSheetNumber(value) {
+  const raw = (value || '').toString().trim();
+  if (!raw) return 0;
+
+  const negative = raw.startsWith('(') && raw.endsWith(')');
+  const cleaned = raw.replace(/[^\d.,-]/g, '');
+  if (!cleaned) return 0;
+
+  let normalized = cleaned;
+  const hasDot = cleaned.includes('.');
+  const hasComma = cleaned.includes(',');
+
+  if (hasDot && hasComma) {
+    if (cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+      normalized = cleaned.replace(/\./g, '').replace(',', '.');
+    } else {
+      normalized = cleaned.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    const parts = cleaned.split(',');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      normalized = `${parts[0].replace(/\./g, '')}.${parts[1]}`;
+    } else {
+      normalized = cleaned.replace(/,/g, '');
+    }
+  }
+
+  const parsed = Number.parseFloat(normalized);
+  if (Number.isNaN(parsed)) return 0;
+  return negative ? -Math.abs(parsed) : parsed;
+}
+
+function parseSheetBoolean(value) {
+  const normalized = (value || '').toString().trim().toLowerCase();
+  return ['true', 'yes', 'y', '1', 'done', 'paid'].includes(normalized);
+}
+
+function findHeaderRowIndex(rows) {
+  let bestIndex = 0;
+  let bestScore = -1;
+  const maxScanRows = Math.min(rows.length, 6);
+
+  for (let i = 0; i < maxScanRows; i++) {
+    const normalizedRow = rows[i].map(normalizeHeader).filter(Boolean);
+    if (!normalizedRow.length) continue;
+
+    let score = 0;
+    if (FINANCE_COLUMN_ALIASES.date.some((alias) => normalizedRow.includes(alias))) score += 1;
+    if (FINANCE_COLUMN_ALIASES.description.some((alias) => normalizedRow.includes(alias))) score += 1;
+    if (FINANCE_COLUMN_ALIASES.income.some((alias) => normalizedRow.includes(alias))) score += 1;
+    if (FINANCE_COLUMN_ALIASES.expenses.some((alias) => normalizedRow.includes(alias))) score += 1;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = i;
+    }
+  }
+
+  // Require at least two core columns to treat a row as headers.
+  return bestScore >= 2 ? bestIndex : 0;
+}
+
+function resolveColumnIndex(normalizedHeaders, key) {
+  const aliases = FINANCE_COLUMN_ALIASES[key] || [];
+
+  for (const alias of aliases) {
+    const exactIdx = normalizedHeaders.indexOf(alias);
+    if (exactIdx !== -1) return exactIdx;
+  }
+
+  // Fallback for variants like "income column", "expenses column", etc.
+  for (let i = 0; i < normalizedHeaders.length; i++) {
+    const header = normalizedHeaders[i];
+    if (!header) continue;
+    for (const alias of aliases) {
+      if (header.includes(alias)) return i;
+    }
+  }
+
+  return -1;
+}
+
 /**
  * Read financial records from Google Sheet using header row for column mapping
  */
@@ -193,37 +316,48 @@ export async function readFinancialRecords(spreadsheetId, sheetTab = 'Sheet1') {
   const rows = await fetchSheet(spreadsheetId, sheetTab);
   if (rows.length < 2) return [];
 
-  const headers = rows[0].map(h => (h || '').toString().trim().toLowerCase());
-  const col = (name) => headers.indexOf(name);
+  const headerRowIndex = findHeaderRowIndex(rows);
+  const normalizedHeaders = (rows[headerRowIndex] || []).map(normalizeHeader);
 
-  const dataRows = rows.slice(1);
+  const columnIndex = Object.keys(FINANCE_COLUMN_ALIASES).reduce((acc, key) => {
+    acc[key] = resolveColumnIndex(normalizedHeaders, key);
+    return acc;
+  }, {});
+
+  const dataRows = rows.slice(headerRowIndex + 1);
+  const importTimestamp = Date.now();
 
   return dataRows.map((row, i) => {
-    const get = (name) => (col(name) >= 0 ? row[col(name)] : '') || '';
-    const getNum = (name) => {
-      const raw = get(name);
-      if (!raw) return 0;
-      // Strip currency symbols, commas, spaces — keep digits, dot, minus
-      const cleaned = raw.replace(/[^0-9.\-]/g, '');
-      return parseFloat(cleaned) || 0;
+    const getValue = (key) => {
+      const mappedIndex = columnIndex[key];
+      if (mappedIndex >= 0 && mappedIndex < row.length) {
+        return row[mappedIndex] || '';
+      }
+
+      const fallbackIndex = FINANCE_FALLBACK_INDEX[key];
+      if (typeof fallbackIndex === 'number' && fallbackIndex < row.length) {
+        return row[fallbackIndex] || '';
+      }
+
+      return '';
     };
 
     return {
-      id: `sheet_${i}_${Date.now()}`,
-      date: get('date'),
-      description: get('description'),
-      interestRate: getNum('interest rate') || getNum('interested rate') || getNum('interestrate') || getNum('interest rate (%)'),
-      income: getNum('income'),
-      expenses: getNum('expenses'),
-      minimumExpenses: getNum('minimum expenses') || getNum('minimumexpenses') || getNum('min expenses'),
-      balance: getNum('balance'),
-      dueDate: get('due date') || get('duedate'),
-      paymentMethod: get('payment method') || get('paymentmethod'),
-      howPaid: get('how paid') || get('howpaid') || get('how i paid?'),
-      done: ['true', 'yes'].includes((get('done') || get('done?')).toLowerCase()),
-      type: get('type'),
-      note: get('note') || get('notes'),
+      id: `sheet_${i}_${importTimestamp}`,
+      date: getValue('date'),
+      description: getValue('description'),
+      interestRate: parseSheetNumber(getValue('interestRate')),
+      income: parseSheetNumber(getValue('income')),
+      expenses: parseSheetNumber(getValue('expenses')),
+      minimumExpenses: parseSheetNumber(getValue('minimumExpenses')),
+      balance: parseSheetNumber(getValue('balance')),
+      dueDate: getValue('dueDate'),
+      paymentMethod: getValue('paymentMethod'),
+      howPaid: getValue('howPaid'),
+      done: parseSheetBoolean(getValue('done')),
+      type: getValue('type'),
+      note: getValue('note'),
       lastModified: new Date().toISOString(),
     };
-  }).filter(r => r.date && r.description);
+  }).filter((record) => record.date && record.description);
 }
