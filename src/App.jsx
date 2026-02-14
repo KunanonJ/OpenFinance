@@ -137,7 +137,7 @@ export default function App() {
           className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
             activeTab === 'finance'
               ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
-              : 'text-slate-500 hover:bg-white/50 hover:text-slate-700 hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
+              : 'text-slate-500 hover:bg-white/50 hover:text-slate-700 hover:shadow-md dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
           }`}
         >
           Finance Tracker
@@ -147,7 +147,7 @@ export default function App() {
           className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
             activeTab === 'subscriptions'
               ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
-              : 'text-slate-500 hover:bg-white/50 hover:text-slate-700 hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
+              : 'text-slate-500 hover:bg-white/50 hover:text-slate-700 hover:shadow-md dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
           }`}
         >
           Subscriptions

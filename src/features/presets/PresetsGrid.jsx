@@ -15,7 +15,7 @@ export default function PresetsGrid({ onSelect }) {
           <button
             key={preset.name}
             onClick={() => onSelect(preset)}
-            className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-100 bg-white p-3 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/30"
+            className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-100 bg-white p-3 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/30"
           >
             {logoUrl ? (
               <img
