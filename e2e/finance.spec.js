@@ -14,7 +14,7 @@ async function addFinanceRecord(page, { description, type, income, expenses }) {
 
   const form = page.locator('form');
 
-  await form.locator('input[placeholder="e.g. Monthly Salary, Water Bill"]').fill(description);
+  await form.locator('input[placeholder="e.g. Netflix, Spotify, Water Bill"]').fill(description);
   if (type) {
     await form.locator('select').first().selectOption(type);
   }
@@ -34,12 +34,21 @@ test.describe('Tab Navigation', () => {
     await expect(page.locator('button:has-text("Finance")')).toBeVisible();
   });
 
-  test('defaults to Subscriptions tab', async ({ page }) => {
+  test('defaults to Finance Tracker tab', async ({ page }) => {
+    await expect(page.locator('text=Total Income')).toBeVisible();
+    await expect(page.locator('text=No subscriptions yet')).not.toBeVisible();
+  });
+
+  test('switches to Subscriptions tab', async ({ page }) => {
+    await page.click('button:has-text("Subscriptions")');
     await expect(page.locator('text=No subscriptions yet')).toBeVisible();
     await expect(page.locator('text=Total Income')).not.toBeVisible();
   });
 
-  test('switches to Finance tab', async ({ page }) => {
+  test('switches back to Finance tab', async ({ page }) => {
+    await page.click('button:has-text("Subscriptions")');
+    await expect(page.locator('text=No subscriptions yet')).toBeVisible();
+
     await page.click('button:has-text("Finance")');
     await expect(page.locator('text=Total Income')).toBeVisible();
     await expect(page.locator('text=Total Expenses')).toBeVisible();
@@ -47,16 +56,10 @@ test.describe('Tab Navigation', () => {
     await expect(page.locator('text=No subscriptions yet')).not.toBeVisible();
   });
 
-  test('switches back to Subscriptions tab', async ({ page }) => {
-    await page.click('button:has-text("Finance")');
-    await expect(page.locator('text=Total Income')).toBeVisible();
-
-    await page.click('button:has-text("Subscriptions")');
-    await expect(page.locator('text=No subscriptions yet')).toBeVisible();
-    await expect(page.locator('text=Total Income')).not.toBeVisible();
-  });
-
   test('tab state is independent of subscription step', async ({ page }) => {
+    // Switch to Subscriptions tab first
+    await page.click('button:has-text("Subscriptions")');
+
     // Add a subscription first
     await page.click('text=Browse All Presets');
     await page.fill('input[placeholder="e.g. Netflix"]', 'TabTest');
@@ -79,9 +82,7 @@ test.describe('Tab Navigation', () => {
 });
 
 test.describe('Finance Section - Empty State', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.click('button:has-text("Finance")');
-  });
+  // Finance Tracker is the default tab, no need to click
 
   test('shows summary cards with zero values', async ({ page }) => {
     await expect(page.locator('text=Total Income')).toBeVisible();
@@ -120,9 +121,7 @@ test.describe('Finance Section - Empty State', () => {
 });
 
 test.describe('Finance - Add Record', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.click('button:has-text("Finance")');
-  });
+  // Finance Tracker is the default tab, no need to click
 
   test('opens Add Record modal', async ({ page }) => {
     await page.click('button:has-text("Add Record")');
@@ -165,7 +164,7 @@ test.describe('Finance - Add Record', () => {
 
 test.describe('Finance - Record Management', () => {
   test.beforeEach(async ({ page }) => {
-    await page.click('button:has-text("Finance")');
+    // Finance Tracker is the default tab
 
     // Add an income record
     await addFinanceRecord(page, { description: 'MonthSalary', type: 'Income', income: 5000 });
@@ -191,7 +190,7 @@ test.describe('Finance - Record Management', () => {
 
     // Change the description
     const form = page.locator('form');
-    await form.locator('input[placeholder="e.g. Monthly Salary, Water Bill"]').fill('Updated Salary');
+    await form.locator('input[placeholder="e.g. Netflix, Spotify, Water Bill"]').fill('Updated Salary');
     await form.getByRole('button', { name: 'Save Changes' }).click();
 
     // Verify update
@@ -200,7 +199,9 @@ test.describe('Finance - Record Management', () => {
 
   test('can delete a record', async ({ page }) => {
     // Click delete button (trash icon) on Electric Bill's card
-    const trashBtns = page.locator('button').filter({ has: page.locator('path[d*="M19 7l"]') });
+    // Scope to the record list to avoid matching the Clear All toolbar button
+    const recordList = page.locator('.space-y-2');
+    const trashBtns = recordList.locator('button').filter({ has: page.locator('path[d*="M19 7l"]') });
     // Delete the second record (Electric Bill)
     await trashBtns.nth(1).click();
 
@@ -211,7 +212,7 @@ test.describe('Finance - Record Management', () => {
 
 test.describe('Finance - Filters', () => {
   test.beforeEach(async ({ page }) => {
-    await page.click('button:has-text("Finance")');
+    // Finance Tracker is the default tab
 
     // Add an Income record
     await addFinanceRecord(page, { description: 'SalaryFilter', type: 'Income', income: 5000 });
@@ -245,8 +246,8 @@ test.describe('Finance - Filters', () => {
     await page.locator('button:has-text("Income")').first().click();
     await expect(page.locator('text=WaterFilter')).not.toBeVisible();
 
-    // Then back to All
-    await page.locator('button:has-text("All")').first().click();
+    // Then back to All (use exact match to avoid matching "Clear All" button)
+    await page.getByRole('button', { name: 'All', exact: true }).click();
     await expect(page.locator('text=SalaryFilter').first()).toBeVisible();
     await expect(page.locator('text=WaterFilter').first()).toBeVisible();
   });
@@ -254,7 +255,7 @@ test.describe('Finance - Filters', () => {
 
 test.describe('Finance - Summary Cards', () => {
   test('updates summary when records are added', async ({ page }) => {
-    await page.click('button:has-text("Finance")');
+    // Finance Tracker is the default tab
 
     await addFinanceRecord(page, { description: 'SummaryIncome', type: 'Income', income: 3000 });
     await addFinanceRecord(page, { description: 'SummaryExpense', type: 'Utility', expenses: 500 });
@@ -268,7 +269,7 @@ test.describe('Finance - Summary Cards', () => {
 
 test.describe('Finance - Data Persistence', () => {
   test('finance records persist across page reload', async ({ page }) => {
-    await page.click('button:has-text("Finance")');
+    // Finance Tracker is the default tab
 
     await addFinanceRecord(page, { description: 'PersistFinance', type: 'Income', income: 999 });
     await expect(page.locator('text=PersistFinance').first()).toBeVisible();
@@ -277,14 +278,14 @@ test.describe('Finance - Data Persistence', () => {
     await page.reload();
     await page.waitForSelector('text=Chameleon');
 
-    // Switch to Finance tab
-    await page.click('button:has-text("Finance")');
-
-    // Record should still be there
+    // Finance Tracker is the default tab, records should be visible immediately
     await expect(page.locator('text=PersistFinance').first()).toBeVisible();
   });
 
   test('finance and subscription data are independent', async ({ page }) => {
+    // Switch to Subscriptions tab to add subscription
+    await page.click('button:has-text("Subscriptions")');
+
     // Add subscription
     await page.click('text=Browse All Presets');
     await page.fill('input[placeholder="e.g. Netflix"]', 'IndependentSub');
@@ -310,8 +311,7 @@ test.describe('Finance - Data Persistence', () => {
 
 test.describe('Finance - Full User Flow', () => {
   test('complete flow: add records -> filter -> edit -> delete -> persist', async ({ page }) => {
-    // 1. Switch to Finance
-    await page.click('button:has-text("Finance")');
+    // 1. Finance Tracker is the default tab
     await expect(page.locator('text=No financial records yet')).toBeVisible();
 
     // 2. Add income record
@@ -327,8 +327,8 @@ test.describe('Finance - Full User Flow', () => {
     await expect(page.locator('text=FlowSalary').first()).toBeVisible();
     await expect(page.locator('text=FlowRent')).not.toBeVisible();
 
-    // 5. Switch back to All
-    await page.locator('button:has-text("All")').first().click();
+    // 5. Switch back to All (use exact match to avoid matching "Clear All" button)
+    await page.getByRole('button', { name: 'All', exact: true }).click();
     await expect(page.locator('text=FlowSalary').first()).toBeVisible();
     await expect(page.locator('text=FlowRent').first()).toBeVisible();
 
@@ -337,19 +337,20 @@ test.describe('Finance - Full User Flow', () => {
     await editBtn.click();
     await expect(page.getByRole('heading', { name: 'Edit Record' })).toBeVisible();
     const form = page.locator('form');
-    await form.locator('input[placeholder="e.g. Monthly Salary, Water Bill"]').fill('FlowSalaryEdited');
+    await form.locator('input[placeholder="e.g. Netflix, Spotify, Water Bill"]').fill('FlowSalaryEdited');
     await form.getByRole('button', { name: 'Save Changes' }).click();
     await expect(page.locator('text=FlowSalaryEdited').first()).toBeVisible();
 
-    // 7. Delete expense record
-    const trashBtns = page.locator('button').filter({ has: page.locator('path[d*="M19 7l"]') });
+    // 7. Delete expense record (scope to record list to avoid Clear All button)
+    const recordList = page.locator('.space-y-2');
+    const trashBtns = recordList.locator('button').filter({ has: page.locator('path[d*="M19 7l"]') });
     await trashBtns.nth(1).click();
     await expect(page.locator('text=FlowRent')).not.toBeVisible();
 
     // 8. Verify persistence
     await page.reload();
     await page.waitForSelector('text=Chameleon');
-    await page.click('button:has-text("Finance")');
+    // Finance Tracker is the default tab
     await expect(page.locator('text=FlowSalaryEdited').first()).toBeVisible();
     await expect(page.locator('text=FlowRent')).not.toBeVisible();
   });

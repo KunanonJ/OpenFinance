@@ -6,6 +6,8 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector('text=Chameleon');
+  // Default tab is Finance Tracker; switch to Subscriptions for subscription tests
+  await page.click('button:has-text("Subscriptions")');
 });
 
 test.describe('App loads', () => {
@@ -351,6 +353,9 @@ test.describe('Full User Flow', () => {
     // Reload the page
     await page.reload();
     await page.waitForSelector('text=Chameleon');
+
+    // Switch to Subscriptions tab (Finance is now default)
+    await page.click('button:has-text("Subscriptions")');
 
     // Subscription should still be there
     await expect(page.locator('.truncate.font-bold:has-text("PersistTest")')).toBeVisible();
