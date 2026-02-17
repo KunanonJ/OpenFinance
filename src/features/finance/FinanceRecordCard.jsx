@@ -3,6 +3,41 @@ import { getTypeColor, getTypeLabel } from '@shared/lib/financeConstants';
 import { getColor } from '@shared/lib/constants';
 import { getLogoProxyUrl } from '@shared/lib/logo';
 
+function formatCardDate(value) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  });
+}
+
+function getDueDateTone(dueDate) {
+  if (!dueDate) {
+    return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+  }
+
+  const parsed = new Date(dueDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  parsed.setHours(0, 0, 0, 0);
+  const days = Math.ceil((parsed.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (days < 0) {
+    return 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300';
+  }
+  if (days <= 3) {
+    return 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300';
+  }
+  return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+}
+
 export default function FinanceRecordCard({ record, onEdit, onRemove }) {
   const typeColor = getTypeColor(record.type);
   const hasIncome = record.income > 0;
@@ -13,10 +48,13 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
 
   const initial = (record.description || '?')[0].toUpperCase();
   const color = record.color ? getColor(record.color) : null;
+  const dueDateTone = getDueDateTone(record.dueDate);
+  const formattedDate = formatCardDate(record.date) || 'No date';
+  const formattedDueDate = formatCardDate(record.dueDate);
 
   return (
     <div
-      className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition-all hover:shadow-md sm:p-4 dark:border-slate-700 dark:bg-slate-800"
+      className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:border-slate-300 hover:shadow-md sm:p-4 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
       onClick={() => onEdit(record.id)}
     >
       {/* Color bar */}
@@ -55,7 +93,7 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate font-bold text-slate-900 dark:text-slate-100">
-            {record.description}
+            {record.description || 'Untitled record'}
           </span>
           <span
             className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
@@ -69,9 +107,13 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
             </svg>
           )}
         </div>
-        <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span>{record.date}</span>
-          {record.dueDate && <span>Due: {record.dueDate}</span>}
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+          <span>{formattedDate}</span>
+          {formattedDueDate && (
+            <span className={`rounded-full px-2 py-0.5 font-medium ${dueDateTone}`}>
+              Due: {formattedDueDate}
+            </span>
+          )}
           {record.paymentMethod && <span>{record.paymentMethod}</span>}
         </div>
       </div>
@@ -102,6 +144,7 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
       <div className="flex shrink-0 items-center gap-1">
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(record.id); }}
+          aria-label={`Edit ${record.description || 'record'}`}
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-indigo-400"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,6 +153,7 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(record.id); }}
+          aria-label={`Delete ${record.description || 'record'}`}
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-red-400"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

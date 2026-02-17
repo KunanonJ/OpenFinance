@@ -1,147 +1,104 @@
 # Chameleon Finance
 
-Chameleon is a personal finance web app for tracking subscriptions and day-to-day financial records in one place.
+Chameleon is a personal finance web app for managing subscriptions and finance records in one place.
 
 - Production: [https://chameleon-finance.pages.dev](https://chameleon-finance.pages.dev)
-- Stack: React + Vite + Zustand + Tailwind + Recharts
-- Data storage: Browser `localStorage` (default) with optional server-side backup to Cloudflare R2
+- Stack: React, Vite, Zustand, Tailwind, Recharts, Cloudflare Pages Functions
+- Latest production deployment (2026-02-17): [https://06bed3c8.chameleon-finance.pages.dev](https://06bed3c8.chameleon-finance.pages.dev)
 
-## Features
+## Core Features
 
 ### Finance Tracker
-- Add and manage financial records (Income, Utility, Loan, Credit Card)
-- Summary cards for total income, expenses, minimum expenses, and net balance
-- Dashboard views: Bar, Line, Pie/Donut, Area, Treemap, Sankey
-- Line chart optimized for monthly overview (last 12 months, including zero-value months)
-- Brand icon support on records (auto-detect via domain/logo API)
-- Google Sheets finance import with header-based mapping
-- Clear All button with two-click confirmation
+- Add/edit/delete records (Income, Utility, Loan, Credit Card)
+- Summary totals (income, expenses, minimum expenses, net balance)
+- Visual dashboards (Bar, Line, Pie, Area, Treemap, Sankey)
+- Google Sheets import for finance tabs with header-based mapping
+- Icon/domain support and date/due-date normalization
 
 ### Subscription Tracker
-- Add/edit/delete subscriptions with category, cycle, and currency
-- Dashboard with charts and Sankey flow
-- Line chart optimized for monthly overview (last 12 months)
-- Budget indicator and trends
+- Add/edit/delete subscriptions with cycle, category, and currency
 - Renewal reminders
-- Preset quick-add cards
+- Budget indicators + trends
+- Dashboard views and CSV export
 
-### UX and Platform
-- Light/Dark theme
-- Hover card shadow on interactive buttons
-- Google Sheets sync support
-- Auto Google Sheets sync (on app start, every 5 minutes, and when back online/focused)
-- iOS/Android support via Capacitor
+### Settings and Data
+- Theme toggle (light/dark)
+- Google Sheets sync
+- JSON import/export
+- Optional secure cloud backup/restore via token
 
-## Quick Start
+## Data Storage Model
+
+Default behavior:
+- Data is stored locally in browser `localStorage`.
+
+Optional cloud backup:
+- User enters a 64-char token in Settings.
+- Backup path is database-first:
+  - Primary: `POST/GET /api/db/backup` (D1)
+  - Fallback: `POST/GET /api/r2/backup` (R2)
+- Auto-backup is enabled when a valid token exists:
+  - On data changes (subscriptions, finance records, budget/trends updates)
+  - Debounced after edits
+  - Every 5 minutes
+  - On tab focus / visibility return
+
+## Local Development
 
 ```bash
-git clone https://github.com/KunanonJ/chameleon-finance.git
-cd chameleon-finance
+git clone https://github.com/KunanonJ/abdull-finance.git
+cd abdull-finance
 npm install
 npm run dev
 ```
 
 Open `http://localhost:5173`.
 
-## Environment and Secrets
-
-- `LOGO_DEV_API_TOKEN` is now server-side only and used by `functions/api/logo/[domain].js`.
-- Client code never includes logo API keys; logos are fetched through `/api/logo/:domain`.
-- For local Pages-function testing, create `.dev.vars` from `.dev.vars.example`.
-
-## Scripts
-
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build locally |
-| `npm test` | Run Vitest unit/integration tests |
-| `npm run test:watch` | Run Vitest in watch mode |
-| `npm run test:e2e` | Run Playwright E2E tests |
-| `npm run cap:sync` | Sync web build to Capacitor |
-| `npm run cap:ios` | Open iOS project |
-| `npm run cap:android` | Open Android project |
-
 ## Testing
-
-Current baseline:
-- Vitest: `242/242` passing
-- Playwright E2E: `54/54` passing
-
-Run locally:
 
 ```bash
 npm test
 npm run test:e2e
 ```
 
-## Google Sheets Sync
+Latest verified status:
+- Vitest: `263/263` passing
+- Playwright E2E: `54/54` passing
 
-No API key is required. Sheets must be shared as **Anyone with the link can view**.
+## Cloudflare Setup
 
-### Auto Sync Behavior
-- Runs automatically when connected:
-  - on app load
-  - every 5 minutes in background
-  - when network is restored (`online`)
-  - when window/tab returns to focus
-- Manual sync button is still available in the UI.
+### Required Function Bindings
+- `LOGO_DEV_API_TOKEN` (secret for logo proxy endpoint)
+- `R2_BUCKET` (for R2 backup/fallback + storage endpoints)
+- D1 binding for DB backup endpoint:
+  - Preferred: `USER_DB`
+  - Also accepted by code: `DB` or `ABDULL_DB`
 
-### Subscription/Budget/Trend Tabs
-Create tabs named exactly:
-- `Subscriptions`
-- `Budget`
-- `Trends`
-
-### Finance Import
-- Finance sync uses the connected sheet URL tab:
-  - if URL contains `gid=...`, it syncs that tab
-  - otherwise it falls back to `Sheet1`
-- Recommended template copy URL:
-  - [https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy](https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy)
-- Import rules:
-  - Header-based mapping (not strict fixed column index)
-  - Auto-detects header row (supports title rows above header)
-  - Explicitly maps `Income` and `Expenses` by column name
-  - Supports header variants like `Interested Rate`, `How I paid?`, `Done?`
-  - Supports common typos like `Income Collumn` and `Expenses Collumn`
-  - Parses formatted numbers (commas, currency symbols, localized formats)
-
-## Deployment
-
-Cloudflare Pages project: `chameleon-finance`
+### Build + Deploy
 
 ```bash
 npm run build
+CLOUDFLARE_ACCOUNT_ID=187ab61ed9dbc6e616cb23e6b95aa8f1 \
 npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=true
 ```
 
-Required production environment variables:
-- `LOGO_DEV_API_TOKEN`: logo.dev token used by backend proxy only.
+## Google Sheets Sync
 
-## Project Structure
+No API key required. Sheet must be shared as **Anyone with the link can view**.
 
-```text
-src/
-  App.jsx
-  store/                    # Zustand stores
-  features/
-    finance/                # Finance records + finance dashboard
-    subscriptions/          # Subscriptions flow
-    sync/                   # Google Sheets integration
-    budget/ reminders/ trends/
-    visualizations/         # Chart views
-    settings/ presets/
-  shared/
-    lib/ ui/ hooks/
-  test/
+Expected tabs:
+- `Subscriptions`
+- `Budget`
+- `Trends`
+- Finance import tab from URL `gid` or fallback `Sheet1`
 
-e2e/                        # Playwright tests
-public/                     # Icons, manifest, static assets
-```
+Finance template:
+- [https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy](https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy)
 
-## Notes
+## Important Files
 
-- This repo uses **Vitest** for unit/integration tests (not Jest by default).
-- Production domain is tied to the Cloudflare Pages project name.
+- `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
+- `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
+- `/Users/kunanonjarat/Desktop/subgrid/src/features/settings/SettingsModal.jsx`
+- `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
+- `/Users/kunanonjarat/Desktop/subgrid/AI_HANDOFF.md`

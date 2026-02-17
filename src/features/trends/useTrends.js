@@ -17,6 +17,9 @@ export function getHistory() {
 export function saveHistory(history) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('subgrid:data-changed'));
+    }
   } catch (err) {
     if (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
       console.warn('Storage quota exceeded - trend data not saved');

@@ -8,6 +8,7 @@ import { useCurrencyStore } from '@store/currencyStore';
 import { useSubscriptionStore } from '@store/subscriptionStore';
 import { useFinanceStore } from '@store/financeStore';
 import {
+  buildServerPayload,
   backupToServer,
   getServerToken,
   isValidServerToken,
@@ -79,23 +80,14 @@ export default function SettingsModal({ isOpen, onClose }) {
       setServerBusy(true);
       setServerMessage('');
 
-      const budgetRaw = localStorage.getItem('subgrid_budget');
-      const trendsRaw = localStorage.getItem('subgrid_history');
-      const budget = budgetRaw ? JSON.parse(budgetRaw) : null;
-      const trends = trendsRaw ? JSON.parse(trendsRaw) : [];
-
-      const payload = {
-        version: 2,
-        backupDate: new Date().toISOString(),
+      const payload = buildServerPayload({
         subscriptions: subs,
-        budget,
-        trends,
         financeRecords: records,
         income,
-      };
+      });
 
       const result = await backupToServer(serverToken, payload);
-      setServerMessage(`Cloud backup complete (${result.backupDate || 'ok'})`);
+      setServerMessage(`Cloud backup complete to ${result.storage || 'cloud'} (${result.backupDate || 'ok'})`);
     } catch (err) {
       setServerMessage(`Cloud backup failed: ${err.message}`);
     } finally {
@@ -213,7 +205,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             Secure Cloud Backup (Optional)
           </label>
           <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
-            Uses server-side R2 storage via `/api/r2/backup`. Your user token stays local to this browser.
+            Saves data server-side using D1 (`/api/db/backup`) with automatic fallback to R2 (`/api/r2/backup`).
           </p>
           <input
             type="password"

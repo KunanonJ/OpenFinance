@@ -68,9 +68,15 @@ export function useSheetsSync() {
       }
       if (result.merged.budget) {
         localStorage.setItem('subgrid_budget', JSON.stringify(result.merged.budget));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('subgrid:data-changed'));
+        }
       }
       if (result.merged.trends) {
         localStorage.setItem('subgrid_history', JSON.stringify(result.merged.trends));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('subgrid:data-changed'));
+        }
       }
 
       const now = new Date().toISOString();

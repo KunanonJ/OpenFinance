@@ -1,9 +1,11 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { useSubscriptionStore } from '@store/subscriptionStore';
+import { useFinanceStore } from '@store/financeStore';
 import { useCurrencyStore } from '@store/currencyStore';
 import { useTheme } from '@shared/hooks/useTheme';
 import { formatCurrency } from '@shared/lib/currencies';
 import { toMonthly } from '@shared/lib/currencies';
+import { backupToServer, buildServerPayload, getServerToken, isValidServerToken } from '@shared/lib/serverStorage';
 
 import SubscriptionList from '@features/subscriptions/SubscriptionList';
 import PresetsGrid from '@features/presets/PresetsGrid';
@@ -15,6 +17,8 @@ import { useSheetsSync } from '@features/sync/useSheetsSync';
 import { useFinanceSheetsSync } from '@features/finance/useFinanceSheetsSync';
 
 const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+const AUTO_BACKUP_INTERVAL_MS = 5 * 60 * 1000;
+const AUTO_BACKUP_DEBOUNCE_MS = 1500;
 const AddSubscriptionModal = lazy(() => import('@features/subscriptions/AddSubscriptionModal'));
 const SettingsModal = lazy(() => import('@features/settings/SettingsModal'));
 const FinanceSection = lazy(() => import('@features/finance/FinanceSection'));
@@ -38,22 +42,28 @@ export default function App() {
   useTheme();
 
   const subs = useSubscriptionStore((s) => s.subs);
+  const income = useSubscriptionStore((s) => s.income);
   const step = useSubscriptionStore((s) => s.step);
   const setStep = useSubscriptionStore((s) => s.setStep);
   const currentView = useSubscriptionStore((s) => s.currentView);
   const setView = useSubscriptionStore((s) => s.setView);
+  const records = useFinanceStore((s) => s.records);
   const initRates = useCurrencyStore((s) => s.initRates);
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
   const { isConnected: isSheetsConnected, pull: pullSheets } = useSheetsSync();
   const { pullFinance } = useFinanceSheetsSync();
   const isAutoSyncingRef = useRef(false);
+  const autoBackupDataRef = useRef({ subs: [], records: [], income: 0 });
+  const autoBackupTimeoutRef = useRef(null);
+  const lastAutoBackupPayloadRef = useRef('');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [preset, setPreset] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('finance');
+  const [localDataTick, setLocalDataTick] = useState(0);
 
   useEffect(() => {
     initRates();
@@ -102,6 +112,67 @@ export default function App() {
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [isSheetsConnected, pullSheets, pullFinance]);
+
+  useEffect(() => {
+    autoBackupDataRef.current = { subs, records, income };
+  }, [subs, records, income]);
+
+  useEffect(() => {
+    const onLocalDataChanged = () => setLocalDataTick((v) => v + 1);
+    window.addEventListener('subgrid:data-changed', onLocalDataChanged);
+    return () => window.removeEventListener('subgrid:data-changed', onLocalDataChanged);
+  }, []);
+
+  const runAutoCloudBackup = async () => {
+    const token = getServerToken();
+    if (!isValidServerToken(token)) return;
+
+    const currentData = autoBackupDataRef.current;
+    const payload = buildServerPayload({
+      subscriptions: currentData.subs,
+      financeRecords: currentData.records,
+      income: currentData.income,
+    });
+
+    const serializedPayload = JSON.stringify(payload);
+    if (serializedPayload === lastAutoBackupPayloadRef.current) return;
+
+    try {
+      await backupToServer(token, payload);
+      lastAutoBackupPayloadRef.current = serializedPayload;
+    } catch (err) {
+      console.warn('Auto cloud backup failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    window.clearTimeout(autoBackupTimeoutRef.current);
+    autoBackupTimeoutRef.current = window.setTimeout(() => {
+      runAutoCloudBackup();
+    }, AUTO_BACKUP_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(autoBackupTimeoutRef.current);
+  }, [subs, records, income, localDataTick]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      runAutoCloudBackup();
+    }, AUTO_BACKUP_INTERVAL_MS);
+
+    const onFocus = () => runAutoCloudBackup();
+    const onVisibilityChange = () => {
+      if (!document.hidden) runAutoCloudBackup();
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
 
   const handleEdit = (id) => {
     setEditId(id);

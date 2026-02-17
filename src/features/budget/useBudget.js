@@ -5,6 +5,12 @@ import { toMonthly } from '@shared/lib/currencies';
 
 export const BUDGET_KEY = 'subgrid_budget';
 
+function notifyDataChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('subgrid:data-changed'));
+  }
+}
+
 export function getBudget() {
   try {
     const data = localStorage.getItem(BUDGET_KEY);
@@ -22,6 +28,7 @@ export function setBudget(amount, currency) {
 
   try {
     localStorage.setItem(BUDGET_KEY, JSON.stringify({ amount, currency }));
+    notifyDataChanged();
     return { success: true };
   } catch {
     return { success: false, error: 'Failed to save budget' };
@@ -31,6 +38,7 @@ export function setBudget(amount, currency) {
 export function removeBudget() {
   try {
     localStorage.removeItem(BUDGET_KEY);
+    notifyDataChanged();
   } catch (err) {
     console.warn('Failed to remove budget:', err);
   }

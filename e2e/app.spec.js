@@ -210,11 +210,8 @@ test.describe('Settings', () => {
 
   test('shows theme toggle', async ({ page }) => {
     await page.click('button[aria-label="Settings"]');
-    // Dark Mode or Light Mode text should be visible
-    const darkMode = page.locator('button:has-text("Dark Mode")');
-    const lightMode = page.locator('button:has-text("Light Mode")');
-    const themeVisible = await darkMode.isVisible() || await lightMode.isVisible();
-    expect(themeVisible).toBe(true);
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /dark mode|light mode/i })).toBeVisible();
   });
 
   test('shows Google Sheets Sync section', async ({ page }) => {
@@ -224,7 +221,7 @@ test.describe('Settings', () => {
 
   test('shows Data export/import buttons', async ({ page }) => {
     await page.click('button[aria-label="Settings"]');
-    await expect(page.locator('text=Data')).toBeVisible();
+    await expect(page.locator('label:has-text("Data")')).toBeVisible();
     await expect(page.locator('button:has-text("Export JSON")')).toBeVisible();
     await expect(page.locator('button:has-text("Import JSON")')).toBeVisible();
   });
@@ -285,16 +282,16 @@ test.describe('Budget Settings', () => {
 test.describe('Theme Toggle', () => {
   test('toggles dark mode', async ({ page }) => {
     await page.click('button[aria-label="Settings"]');
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 
-    // Find and click the theme toggle
-    const darkModeBtn = page.locator('button:has-text("Dark Mode")');
-    const lightModeBtn = page.locator('button:has-text("Light Mode")');
+    const darkModeBtn = page.getByRole('button', { name: /dark mode/i });
+    const lightModeBtn = page.getByRole('button', { name: /light mode/i });
 
     if (await darkModeBtn.isVisible()) {
       await darkModeBtn.click();
-      // After clicking Dark Mode, it should now show Light Mode
       await expect(lightModeBtn).toBeVisible();
     } else {
+      await expect(lightModeBtn).toBeVisible();
       await lightModeBtn.click();
       await expect(darkModeBtn).toBeVisible();
     }

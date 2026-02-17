@@ -1,95 +1,96 @@
 # AI Handoff: Chameleon Finance
 
-This file captures the latest deploy + code state so the next AI/dev can continue without re-discovery.
+Updated: 2026-02-17
 
-## 1. Project Snapshot
+## Project Snapshot
 
-- Name: `chameleon-finance`
-- Repo remote: `https://github.com/KunanonJ/abdull-finance.git`
+- Repo: `https://github.com/KunanonJ/abdull-finance.git`
 - Branch: `main`
-- Production domain: `https://chameleon-finance.pages.dev`
-- Latest production deployment: `https://b5d73bf3.chameleon-finance.pages.dev`
-- Latest deploy id: `b5d73bf3-4874-4f81-a20b-39b31aff3873`
-- Cloudflare account id used for deploy: `187ab61ed9dbc6e616cb23e6b95aa8f1`
-- Updated at: `2026-02-17`
+- Cloudflare Pages project: `chameleon-finance`
+- Production URL: `https://chameleon-finance.pages.dev`
+- Latest deployment URL: `https://06bed3c8.chameleon-finance.pages.dev`
+- Cloudflare account ID used for deploy: `187ab61ed9dbc6e616cb23e6b95aa8f1`
 
-## 2. What Was Changed Most Recently
+## What Changed In This Session
 
-### Security: logo token removal from client
-- Removed hardcoded `LOGO_API_TOKEN` from client constants.
-- Added backend proxy endpoint for logos:
-  - `functions/api/logo/[domain].js`
-- Added shared helper to build proxy URL:
-  - `src/shared/lib/logo.js`
-- Updated UI components to use `/api/logo/:domain` (no client-side token in requests).
-- Existing exposed token value was scrubbed from source files/docs and must remain revoked.
+### 1. Card UX/UI upgrade (Subscriptions + Finance cards)
+- Improved visual hierarchy, badges, and spacing.
+- Added due-date tone logic on finance cards.
+- Added better accessibility labels and keyboard behavior.
+- Files:
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/subscriptions/SubscriptionCard.jsx`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/finance/FinanceRecordCard.jsx`
 
-### Performance: code splitting
-- Added lazy loading and `Suspense` for heavy sections and modals in:
-  - `src/App.jsx`
-- Added Vite chunking strategy in:
-  - `vite.config.js`
+### 2. Cloudflare analytics warning fix
+- Removed `%VITE_CLOUDFLARE_ANALYTICS_TOKEN%` placeholder script from `index.html`.
+- Added runtime optional analytics script injection in `main.jsx`.
+- No build warning now if env var is absent.
+- Files:
+  - `/Users/kunanonjarat/Desktop/subgrid/index.html`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/main.jsx`
 
-### Server-side storage path (optional)
-- Added helper client for backup/restore via existing R2 API:
-  - `src/shared/lib/serverStorage.js`
-- Added Settings UI for token-based cloud backup/restore:
-  - `src/features/settings/SettingsModal.jsx`
-- Current model:
-  - localStorage remains primary
-  - server backup is opt-in
+### 3. E2E stabilization and full test pass
+- Installed Playwright Chromium runtime.
+- Fixed brittle theme/data selectors in E2E tests.
+- File:
+  - `/Users/kunanonjarat/Desktop/subgrid/e2e/app.spec.js`
 
-### Test additions
-- Added CSV parser + recurring detection tests:
-  - `src/shared/lib/csvParser.test.js`
-- Added Sheets sync hook tests:
-  - `src/features/sync/useSheetsSync.test.js`
+### 4. Database-backed user data recording
+- Added D1 backup endpoint:
+  - `POST/GET /api/db/backup`
+  - File: `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
+- Updated client backup logic to:
+  - Try DB endpoint first (`/api/db/backup`)
+  - Fallback to R2 endpoint (`/api/r2/backup`)
+  - File: `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
+- Added normalized payload builder including:
+  - `subscriptions`, `financeRecords`, `income`, `budget`, `trends`
+- Added automatic backup triggers in app:
+  - Debounced on data changes
+  - Every 5 minutes
+  - On focus/visibility return
+  - File: `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
+- Added backup trigger events for localStorage changes in:
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/budget/useBudget.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/trends/useTrends.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/sync/useSheetsSync.js`
+- Updated settings copy to describe DB-first backup path:
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/settings/SettingsModal.jsx`
+- Added tests for storage fallback/payload:
+  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.test.js`
 
-## 3. Deploy Runbook (Cloudflare Pages)
+### 5. Docs refresh
+- Rebuilt README to remove merge artifacts and document current architecture + deployment.
+- File:
+  - `/Users/kunanonjarat/Desktop/subgrid/README.md`
 
-### Build
+## Verification Results
+
+- Build: `npm run build` passed
+- Unit tests: `263/263` passed
+- E2E tests: `54/54` passed
+
+## Deploy Runbook
+
 ```bash
 npm run build
-```
-
-### Deploy (explicit account selection needed)
-```bash
 CLOUDFLARE_ACCOUNT_ID=187ab61ed9dbc6e616cb23e6b95aa8f1 \
 npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=true
 ```
 
-### Verify latest deployment
-```bash
-CLOUDFLARE_ACCOUNT_ID=187ab61ed9dbc6e616cb23e6b95aa8f1 \
-npx wrangler pages deployment list --project-name=chameleon-finance
-```
+## Runtime/Binder Requirements
 
-## 4. Required Runtime Secrets
+- `LOGO_DEV_API_TOKEN` (secret)
+- `R2_BUCKET` (for R2 backup/fallback and storage routes)
+- D1 binding for DB backup endpoint:
+  - preferred: `USER_DB`
+  - also supported: `DB` or `ABDULL_DB`
 
-- `LOGO_DEV_API_TOKEN`
-  - Used only by `functions/api/logo/[domain].js`
-  - Must be set in Cloudflare Pages/Workers environment
-  - Must not be committed into source
+## Notes For Next AI/Dev
 
-For local testing:
-- `.dev.vars.example` exists
-- create `.dev.vars` from it with real values
-
-## 5. Known Issues / Caveats
-
-- Build warning still appears:
-  - `%VITE_CLOUDFLARE_ANALYTICS_TOKEN% is not defined in /index.html`
-  - non-blocking for deploy, but should be configured cleanly.
-- Vitest currently fails to run in this environment due local `jsdom` package issue:
-  - missing `node_modules/jsdom/lib/generated/idl/utils.js`
-  - tests added but not fully executed in this environment.
-- Wrangler requires explicit account id when multiple Cloudflare accounts are present.
-
-## 6. Files to Read First for Continuation
-
-- `src/App.jsx` (lazy loading / app shell)
-- `functions/api/logo/[domain].js` (logo proxy endpoint)
-- `src/shared/lib/logo.js` (logo URL normalization/proxy)
-- `src/features/settings/SettingsModal.jsx` (server backup/restore UI)
-- `src/shared/lib/serverStorage.js` (R2 backup client helpers)
-- `src/features/sync/useSheetsSync.test.js` and `src/shared/lib/csvParser.test.js` (new tests)
+- If `X-User-Token` is set (64-char hex), app will auto-backup user data server-side.
+- Backup path is DB-first, R2 fallback.
+- Read these first for data persistence flow:
+  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
