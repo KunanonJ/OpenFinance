@@ -1,50 +1,70 @@
-# Chameleon Finance
+# Chameleon Finance Builder
 
-Chameleon is a personal finance web app for managing subscriptions and finance records in one place.
+Chameleon is an AI-assisted, no-code-style finance app builder focused on budgeting, subscription tracking, and dashboard reporting.
 
 - Production: [https://chameleon-finance.pages.dev](https://chameleon-finance.pages.dev)
-- Stack: React, Vite, Zustand, Tailwind, Recharts, Cloudflare Pages Functions
-- Latest production deployment (2026-02-17): [https://69885308.chameleon-finance.pages.dev](https://69885308.chameleon-finance.pages.dev)
+- Stack: React, Vite, Zustand, Recharts, Cloudflare Pages Functions
+
+## Product Direction (Base44 PRD Alignment)
+
+This project is now aligned to the Base44-style product direction: natural-language driven app building, dashboard-first analytics, and iterative feature expansion.
+
+### Implemented Today
+
+- Finance tracker with CRUD records (income and expense)
+- Subscription tracker with reminders and trends
+- Dashboard visualizations: Bar, Line, Pie, Area, Treemap, Sankey
+- Google Sheets sync with header-based mapping
+- Finance import that respects sheet `gid` from connected Google Sheets URLs
+- Local storage with optional cloud backup/restore via Cloudflare endpoints
+
+### In Progress / Next Phase
+
+- Builder Chat (prompt-to-app workflow planner)
+- Discussion Mode (sandboxed planning before applying changes)
+- Expanded add-ons and integrations management
+- Richer app-management layer (versioning/test dashboard/workflow builder)
 
 ## Core Features
 
 ### Finance Tracker
-- Add/edit/delete records (Income, Utility, Loan, Credit Card)
-- Summary totals (income, expenses, minimum expenses, net balance)
-- Visual dashboards (Bar, Line, Pie, Area, Treemap, Sankey)
-- Multi-file bank statement import (`.csv/.tsv/.txt`) with dedupe + import summary
-- Google Sheets import for finance tabs with header-based mapping
-- Icon/domain support and date/due-date normalization
+
+- Add, edit, delete records
+- Record type support (Income, Utility, Loan, Credit Card)
+- Summary cards and monthly overview
+- Bank statement file import (`.csv/.tsv/.txt`) with normalization and dedupe
+- Brand icon detection via domain (logo service)
 
 ### Subscription Tracker
-- Add/edit/delete subscriptions with cycle, category, and currency
-- Renewal reminders
-- Budget indicators + trends
-- Dashboard views and CSV export
 
-### Settings and Data
-- Theme toggle (light/dark)
-- Google Sheets sync
+- Add/edit/delete subscriptions
+- Monthly/yearly cost overview
+- Upcoming renewals
+- Trend and category visualizations
+
+### Sync + Data
+
+- Google Sheets pull sync
 - JSON import/export
-- Optional secure cloud backup/restore via token or Cloudflare social login
+- Local-first persistence via browser storage
+- Optional cloud backup and restore
 
-## Data Storage Model
+## Google Sheets Sync
 
-Default behavior:
-- Data is stored locally in browser `localStorage`.
+No API key is required when sheets are shared as **Anyone with the link can view**.
 
-Optional cloud backup:
-- User can either:
-  - enter a 64-char token in Settings, or
-  - sign in through Cloudflare Access social login (Google/GitHub/etc).
-- Backup path is database-first:
-  - Primary: `POST/GET /api/db/backup` (D1)
-  - Fallback: `POST/GET /api/r2/backup` (R2)
-- Auto-backup is enabled when auth is available (valid token or Cloudflare Access session):
-  - On data changes (subscriptions, finance records, budget/trends updates)
-  - Debounced after edits
-  - Every 5 minutes
-  - On tab focus / visibility return
+Expected tabs:
+
+- `Subscriptions`
+- `Budget`
+- `Trends`
+- Finance tab:
+  - if the connected sheet URL includes `gid`, that tab is used
+  - otherwise, fallback tab is `Sheet1`
+
+Finance template:
+
+- [https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy](https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy)
 
 ## Local Development
 
@@ -64,32 +84,7 @@ npm test
 npm run test:e2e
 ```
 
-Latest verified status:
-- Vitest: `271/271` passing
-- Playwright E2E: `55/55` passing
-
-## Cloudflare Setup
-
-### Required Function Bindings
-- `LOGO_DEV_API_TOKEN` (secret for logo proxy endpoint)
-- `R2_BUCKET` (for R2 backup/fallback + storage endpoints)
-- D1 binding for DB backup endpoint:
-  - Preferred: `USER_DB`
-  - Also accepted by code: `DB` or `ABDULL_DB`
-
-### Social Login via Cloudflare Access
-1. In Cloudflare Zero Trust, add an **Access application** for your Pages production domain (for example `chameleon-finance.pages.dev`).
-2. Add at least one social identity provider (Google/GitHub/etc.) and include it in an Access policy.
-3. Ensure policy allows your intended users.
-4. In the app Settings:
-   - use **Social Login (Cloudflare Access)** section to sign in/out.
-   - `Backup to Cloud` and `Restore from Cloud` will then use the authenticated Access identity automatically (without manual token).
-
-Troubleshooting:
-- If Sign in opens a 404 page (`/cdn-cgi/access/login`), Access policy is not enabled yet for this Pages project.
-- Configure it in Cloudflare dashboard: **Pages project -> Settings -> Access policy** (choose All deployments or only Preview deployments).
-
-### Build + Deploy
+## Cloudflare Deploy
 
 ```bash
 npm run build
@@ -97,23 +92,16 @@ CLOUDFLARE_ACCOUNT_ID=187ab61ed9dbc6e616cb23e6b95aa8f1 \
 npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=true
 ```
 
-## Google Sheets Sync
+## Runtime Bindings
 
-No API key required. Sheet must be shared as **Anyone with the link can view**.
+- `LOGO_DEV_API_TOKEN`
+- `R2_BUCKET`
+- D1 binding for DB backup endpoint (preferred `USER_DB`, also supports `DB` and `ABDULL_DB`)
 
-Expected tabs:
-- `Subscriptions`
-- `Budget`
-- `Trends`
-- Finance import tab from URL `gid` or fallback `Sheet1`
-
-Finance template:
-- [https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy](https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy)
-
-## Important Files
+## Key Paths
 
 - `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
+- `/Users/kunanonjarat/Desktop/subgrid/src/features/finance/useFinanceSheetsSync.js`
+- `/Users/kunanonjarat/Desktop/subgrid/src/features/sync/sheetsApi.js`
 - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
-- `/Users/kunanonjarat/Desktop/subgrid/src/features/settings/SettingsModal.jsx`
-- `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
 - `/Users/kunanonjarat/Desktop/subgrid/AI_HANDOFF.md`

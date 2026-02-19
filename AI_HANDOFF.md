@@ -1,70 +1,68 @@
-# AI Handoff: Chameleon Finance
+# AI Handoff: Chameleon Finance Builder
 
-Updated: 2026-02-17
+Updated: 2026-02-19
 
-## Project Snapshot
+## Snapshot
 
 - Repo: `https://github.com/KunanonJ/abdull-finance.git`
 - Branch: `main`
 - Cloudflare Pages project: `chameleon-finance`
 - Production URL: `https://chameleon-finance.pages.dev`
-- Latest deployment URL: `https://69885308.chameleon-finance.pages.dev`
-- Cloudflare account ID used for deploy: `187ab61ed9dbc6e616cb23e6b95aa8f1`
 
-## What Changed In This Session
+## What Was Updated In This Session
 
-### 1. Multi-file bank statement upload (Finance Tracker)
-- Added new parser/import pipeline for `.csv/.tsv/.txt` statements.
-- Supports header alias detection (`date`, `description`, `amount`, `debit`, `credit`, `balance`, `type`).
-- Supports amount/date normalization + row-level validation.
-- Deduplicates imported records against existing finance records.
-- Added toolbar upload action and import summary message.
-- Files:
-  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/bankStatementImport.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/finance/FinanceToolbar.jsx`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/bankStatementImport.test.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/e2e/finance.spec.js`
+### 1. Product alignment from Base44 PRD
 
-### 2. Cloudflare social login for cloud backup/restore
-- Added auth helper to resolve identity from:
-  - legacy `X-User-Token` header, or
-  - Cloudflare Access identity headers.
-- Added `/api/auth/me` endpoint for frontend login state.
-- Updated D1 and R2 backup routes to accept either auth mode.
-- Updated Settings UI with:
-  - social login status
-  - sign in / sign out links via Cloudflare Access
-  - refresh login status action
-- Added Access endpoint probing (`/cdn-cgi/access/login`) to detect missing Access policy and show clear UI warning instead of broken sign-in link.
-- Updated auto-backup flow to run with either:
-  - valid token, or
-  - active Cloudflare Access session.
-- Files:
-  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/_lib/auth.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/auth/me.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/r2/_middleware.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/settings/SettingsModal.jsx`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.test.js`
+Applied PRD-driven product positioning updates across the app shell and docs:
 
-### 3. Docs + repo hygiene
-- Updated README with:
-  - latest deployment URL
-  - current test totals
-  - social login + backup notes
-  - bank statement import mention
-- Ignored local npm cache directory in git.
-- Files:
-  - `/Users/kunanonjarat/Desktop/subgrid/README.md`
-  - `/Users/kunanonjarat/Desktop/subgrid/.gitignore`
+- Header subtitle changed to: `AI-Powered No-Code Finance Builder`
+- Added a product alignment card in the app shell with:
+  - Builder Chat
+  - Discussion Mode
+  - Dashboard capabilities
+- Updated browser metadata/title/description for the new product positioning
+- Updated PWA manifest name/description
 
-## Verification Results
+Files:
 
-- Build: `npm run build` passed
-- Unit tests: `271/271` passed
-- E2E tests: `55/55` passed
+- `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
+- `/Users/kunanonjarat/Desktop/subgrid/index.html`
+- `/Users/kunanonjarat/Desktop/subgrid/public/manifest.json`
+
+### 2. Documentation cleanup and PRD mapping
+
+Rewrote README to be cleaner and easier to scan, with explicit sections for:
+
+- Product direction and PRD alignment
+- Implemented capabilities vs next phase
+- Google Sheets `gid` finance-tab behavior
+- Local dev, testing, and deploy runbooks
+
+Files:
+
+- `/Users/kunanonjarat/Desktop/subgrid/README.md`
+- `/Users/kunanonjarat/Desktop/subgrid/AI_HANDOFF.md`
+
+## Existing Important Behavior (from prior fixes)
+
+- Finance Google Sheets import now respects the `gid` from the connected sheet URL.
+- If no `gid` is found in the URL, finance sync falls back to `Sheet1`.
+- Column mapping for finance import is header-based, not fixed-index.
+
+Key files for sync logic:
+
+- `/Users/kunanonjarat/Desktop/subgrid/src/features/finance/useFinanceSheetsSync.js`
+- `/Users/kunanonjarat/Desktop/subgrid/src/features/sync/sheetsApi.js`
+
+## Verification Checklist
+
+Run before deploy:
+
+```bash
+npm test
+npm run test:e2e
+npm run build
+```
 
 ## Deploy Runbook
 
@@ -74,22 +72,16 @@ CLOUDFLARE_ACCOUNT_ID=187ab61ed9dbc6e616cb23e6b95aa8f1 \
 npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=true
 ```
 
-## Runtime/Binder Requirements
+## Open Product Gaps Toward Full Base44 Vision
 
-- `LOGO_DEV_API_TOKEN` (secret)
-- `R2_BUCKET` (for R2 backup/fallback and storage routes)
-- D1 binding for DB backup endpoint:
-  - preferred: `USER_DB`
-  - also supported: `DB` or `ABDULL_DB`
+- No end-user natural-language prompt-to-app generation engine yet
+- No dedicated discussion sandbox/workspace separation yet
+- No workflow builder / version rollback UI yet
+- No centralized testing management dashboard yet
 
-## Notes For Next AI/Dev
+Recommended next implementation order:
 
-- Cloud backup/restore now supports two auth modes:
-  - token mode (`X-User-Token`, 64-hex), and
-  - Cloudflare Access social login mode (header-driven identity).
-- For social login to work in production, configure Cloudflare Zero Trust Access app + IdP policy for the Pages domain.
-- Read these first for auth + backup flow:
-  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/_lib/auth.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/auth/me.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/settings/SettingsModal.jsx`
+1. Builder Chat MVP (prompt parsing + generated app blueprint)
+2. Discussion Mode sandbox with draft apply/discard flow
+3. Integration manager for add-ons and external connectors
+4. Versioned change history and rollback

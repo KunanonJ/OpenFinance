@@ -1,7 +1,7 @@
 {
-  "name": "Chameleon",
+  "name": "Chameleon Finance Builder",
   "short_name": "Chameleon",
-  "description": "Personal Finance Tracker",
+  "description": "AI-powered no-code finance builder with dashboards and Google Sheets sync",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#00CC99",
