@@ -5,6 +5,7 @@
 
 export async function onRequestPost(context) {
   const { request, env, data } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
 
   let body;
@@ -30,7 +31,7 @@ export async function onRequestPost(context) {
   const sanitized = filename.replace(/[/\\:*?"<>|]/g, "_").slice(0, 128);
   const key = `${prefix}/exports/${sanitized}`;
 
-  await env.R2_BUCKET.put(key, content, {
+  await bucket.put(key, content, {
     httpMetadata: { contentType: contentType || "application/octet-stream" },
     customMetadata: {
       originalFilename: filename,
@@ -49,9 +50,10 @@ export async function onRequestPost(context) {
 
 export async function onRequestGet(context) {
   const { env, data } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
 
-  const listed = await env.R2_BUCKET.list({
+  const listed = await bucket.list({
     prefix: `${prefix}/exports/`,
   });
 

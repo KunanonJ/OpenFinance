@@ -9,14 +9,14 @@
     "SplashScreen": {
       "launchAutoHide": true,
       "launchShowDuration": 2000,
-      "backgroundColor": "#0f172a"
+      "backgroundColor": "#f9f2e6"
     },
     "StatusBar": {
       "style": "Dark"
     },
     "LocalNotifications": {
       "smallIcon": "ic_stat_icon",
-      "iconColor": "#6366f1"
+      "iconColor": "#ff9901"
     }
   }
 }

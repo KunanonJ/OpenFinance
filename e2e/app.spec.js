@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForSelector('text=Chameleon');
+  await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
   // Default tab is Finance Tracker; switch to Subscriptions for subscription tests
   await page.click('button:has-text("Subscriptions")');
 });
@@ -349,7 +349,7 @@ test.describe('Full User Flow', () => {
 
     // Reload the page
     await page.reload();
-    await page.waitForSelector('text=Chameleon');
+    await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
 
     // Switch to Subscriptions tab (Finance is now default)
     await page.click('button:has-text("Subscriptions")');

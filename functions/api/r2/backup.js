@@ -5,6 +5,7 @@
 
 export async function onRequestPost(context) {
   const { request, env, data } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
 
   let body;
@@ -35,14 +36,14 @@ export async function onRequestPost(context) {
   };
 
   // Write latest (overwrite)
-  await env.R2_BUCKET.put(`${prefix}/data/latest.json`, jsonStr, {
+  await bucket.put(`${prefix}/data/latest.json`, jsonStr, {
     httpMetadata: { contentType: "application/json" },
     customMetadata,
   });
 
   // Write timestamped backup
   const backupKey = `${prefix}/data/backups/backup-${timestamp}.json`;
-  await env.R2_BUCKET.put(backupKey, jsonStr, {
+  await bucket.put(backupKey, jsonStr, {
     httpMetadata: { contentType: "application/json" },
     customMetadata,
   });
@@ -59,6 +60,7 @@ export async function onRequestPost(context) {
 
 export async function onRequestGet(context) {
   const { env, data } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
   const url = new URL(context.request.url);
   const specificKey = url.searchParams.get("key");
@@ -73,7 +75,7 @@ export async function onRequestGet(context) {
     });
   }
 
-  const object = await env.R2_BUCKET.get(key);
+  const object = await bucket.get(key);
 
   if (!object) {
     return new Response(JSON.stringify({ error: "No backup found" }), {

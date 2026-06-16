@@ -1,4 +1,5 @@
 import { resolveUserToken } from '../_lib/auth.js';
+import { getR2BucketBinding } from '../_lib/bindings.js';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,7 +20,8 @@ export async function onRequest(context) {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (!context.env.R2_BUCKET) {
+  const r2Bucket = getR2BucketBinding(context.env);
+  if (!r2Bucket) {
     return jsonResponse({ error: "R2 not configured" }, 501);
   }
 
@@ -31,6 +33,7 @@ export async function onRequest(context) {
   context.data.userPrefix = `users/${auth.token}`;
   context.data.authMode = auth.authMode;
   context.data.corsHeaders = corsHeaders;
+  context.data.r2Bucket = r2Bucket;
 
   const response = await context.next();
 

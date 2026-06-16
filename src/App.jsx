@@ -243,7 +243,7 @@ export default function App() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl dark:text-slate-100">Chameleon</h1>
           <div className="mt-1 flex items-center gap-3">
-            <p className="text-sm text-slate-400 dark:text-slate-500">AI-Powered No-Code Finance Builder</p>
+            <p className="text-sm text-muted-foreground">Finance and subscription tracker</p>
             <SyncIndicator />
           </div>
         </div>
@@ -294,24 +294,6 @@ export default function App() {
         >
           Subscriptions
         </button>
-      </div>
-
-      <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-        <div className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">Base44 Product Alignment</div>
-        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-          Chameleon now aligns to an AI-builder product model: natural-language workflow planning, dashboard-first reporting, and Google Sheets-connected data sync.
-        </p>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
-            Builder Chat: capture app intent in plain language
-          </div>
-          <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
-            Discussion Mode: iterate ideas safely before applying changes
-          </div>
-          <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
-            Dashboards: line, bar, pie, area, treemap, and sankey views
-          </div>
-        </div>
       </div>
 
       {/* Finance Tracker Section */}

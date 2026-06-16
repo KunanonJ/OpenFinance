@@ -4,11 +4,12 @@
 
 export async function onRequestGet(context) {
   const { env, data } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
   const url = new URL(context.request.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
 
-  const listed = await env.R2_BUCKET.list({
+  const listed = await bucket.list({
     prefix: `${prefix}/data/backups/`,
     limit,
   });

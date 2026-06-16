@@ -1,16 +1,11 @@
-name = "abdull-finance"
-compatibility_date = "2024-11-01"
+name = "chameleon-finance"
+compatibility_date = "2025-12-12"
 pages_build_output_dir = "dist"
 
-[[kv_namespaces]]
-binding = "ABDULL_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
-
-[[d1_databases]]
-binding = "ABDULL_DB"
-database_name = "abdull-finance"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "subgrid_events"
 
 [[r2_buckets]]
-binding = "ABDULL_BUCKET"
-bucket_name = "abdull-finance"
+binding = "R2_BUCKET"
+bucket_name = "subgrid-storage"

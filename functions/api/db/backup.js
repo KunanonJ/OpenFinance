@@ -1,4 +1,5 @@
 import { resolveUserToken } from '../_lib/auth.js';
+import { getDatabaseBinding } from '../_lib/bindings.js';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,10 +24,6 @@ function jsonResponse(body, status = 200) {
       'Content-Type': 'application/json; charset=UTF-8',
     },
   });
-}
-
-function getDatabaseBinding(env) {
-  return env.USER_DB || env.DB || env.ABDULL_DB || null;
 }
 
 async function ensureSchema(db) {
