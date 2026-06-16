@@ -53,7 +53,7 @@ for (const viewport of MOBILE_VIEWPORTS) {
       await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
-      await page.waitForSelector('text=Chameleon');
+      await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
 
       // Finance step 1 (empty state)
       await assertNoHorizontalOverflow(page, `${viewport.name} finance step1 empty`);
@@ -80,4 +80,3 @@ for (const viewport of MOBILE_VIEWPORTS) {
     });
   });
 }
-

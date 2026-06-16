@@ -10,6 +10,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function onRequestPost(context) {
   const { request, env, data, params } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
   const subId = params.subId;
 
@@ -59,7 +60,7 @@ export async function onRequestPost(context) {
 
   const key = `${prefix}/attachments/${subId}/${sanitized}`;
 
-  await env.R2_BUCKET.put(key, file.stream(), {
+  await bucket.put(key, file.stream(), {
     httpMetadata: { contentType: file.type },
     customMetadata: {
       originalName: file.name,
@@ -81,6 +82,7 @@ export async function onRequestPost(context) {
 
 export async function onRequestGet(context) {
   const { env, data, params } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
   const subId = params.subId;
 
@@ -91,7 +93,7 @@ export async function onRequestGet(context) {
     });
   }
 
-  const listed = await env.R2_BUCKET.list({
+  const listed = await bucket.list({
     prefix: `${prefix}/attachments/${subId}/`,
   });
 

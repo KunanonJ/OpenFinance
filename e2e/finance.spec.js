@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForSelector('text=Chameleon');
+  await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
 });
 
 // Helper: fill and submit a finance record via the modal form
@@ -327,7 +327,7 @@ test.describe('Finance - Data Persistence', () => {
 
     // Reload
     await page.reload();
-    await page.waitForSelector('text=Chameleon');
+    await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
 
     // Finance Tracker is the default tab, records should be visible immediately
     await expect(page.locator('text=PersistFinance').first()).toBeVisible();
@@ -398,7 +398,7 @@ test.describe('Finance - Full User Flow', () => {
 
     // 8. Verify persistence
     await page.reload();
-    await page.waitForSelector('text=Chameleon');
+    await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
     // Finance Tracker is the default tab
     await expect(page.locator('text=FlowSalaryEdited').first()).toBeVisible();
     await expect(page.locator('text=FlowRent')).not.toBeVisible();

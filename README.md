@@ -1,4 +1,4 @@
-# Chameleon Finance Builder
+# Chameleon Finance
 
 Chameleon is a local-first finance and subscription tracker with optional cloud sync/backup, Google Sheets integration, and dashboard analytics.
 
@@ -497,16 +497,17 @@ npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=t
 
 - `wrangler.jsonc` (current Pages-oriented config):
   - `ANALYTICS`, `R2_BUCKET`
-- `wrangler.toml` (legacy bindings names):
-  - `ABDULL_KV`, `ABDULL_DB`, `ABDULL_BUCKET`
+- `wrangler.toml` (compatibility mirror for local/CLI workflows):
+  - `ANALYTICS`, `R2_BUCKET`
 
-The code currently supports both modern and legacy binding names in some endpoints.
+The code resolves modern binding names first and keeps legacy `ABDULL_*` fallbacks for older
+utility endpoints.
 
 ---
 
 ## Mobile and Native Shell
 
-- `ios/` and `android/` directories are Capacitor shells.
+- iOS/Android are wrapped with Capacitor (`appId: com.chameleon.app`). The native `ios/` and `android/` projects are **not committed** — run `cap:sync` to generate them from `dist/`.
 - Relevant scripts in `package.json`:
   - `cap:sync`
   - `cap:ios`

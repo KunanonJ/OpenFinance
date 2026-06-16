@@ -5,6 +5,7 @@
 
 export async function onRequestGet(context) {
   const { env, data, params } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
   const { filename } = params;
 
@@ -16,7 +17,7 @@ export async function onRequestGet(context) {
   }
 
   const key = `${prefix}/exports/${filename}`;
-  const object = await env.R2_BUCKET.get(key);
+  const object = await bucket.get(key);
 
   if (!object) {
     return new Response(JSON.stringify({ error: "Export not found" }), {
@@ -37,6 +38,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestDelete(context) {
   const { env, data, params } = context;
+  const bucket = data.r2Bucket || env.R2_BUCKET;
   const prefix = data.userPrefix;
   const { filename } = params;
 
@@ -48,7 +50,7 @@ export async function onRequestDelete(context) {
   }
 
   const key = `${prefix}/exports/${filename}`;
-  await env.R2_BUCKET.delete(key);
+  await bucket.delete(key);
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: { "Content-Type": "application/json" },

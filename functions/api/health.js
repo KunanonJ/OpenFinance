@@ -1,9 +1,7 @@
+import { getBindingStatus } from './_lib/bindings.js';
+
 export async function onRequest({ env }) {
-  const bindings = {
-    kv: Boolean(env.ABDULL_KV),
-    d1: Boolean(env.ABDULL_DB),
-    r2: Boolean(env.ABDULL_BUCKET),
-  };
+  const bindings = getBindingStatus(env);
 
   return new Response(
     JSON.stringify({
