@@ -1,6 +1,6 @@
-# Open Finance
+# OpenFinance
 
-Open Finance is a local-first finance and subscription tracker with optional cloud sync/backup, Google Sheets integration, and dashboard analytics.
+OpenFinance is a local-first finance and subscription tracker with optional cloud sync/backup, Google Sheets integration, and dashboard analytics.
 
 - Production: [https://chameleon-finance-c4y.pages.dev](https://chameleon-finance-c4y.pages.dev)
 - Stack: React 19, Vite 8, Tailwind CSS v4, Zustand, Recharts, Cloudflare Pages Functions, D1, R2
@@ -465,8 +465,8 @@ Common fields used across UI/store/sync:
 ### Local Development
 
 ```bash
-git clone https://github.com/KunanonJ/chameleon-finance.git
-cd chameleon-finance
+git clone https://github.com/KunanonJ/OpenFinance.git
+cd OpenFinance
 npm install
 npm run dev
 ```

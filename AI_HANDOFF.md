@@ -1,17 +1,17 @@
-# Project Handoff: Chameleon Finance
+# Project Handoff: OpenFinance
 
 Updated: 2026-06-16
 
 ## Snapshot
 
-- Repo: `https://github.com/KunanonJ/chameleon-finance.git`
+- Repo: `https://github.com/KunanonJ/OpenFinance.git`
 - Branch: `main`
 - Cloudflare Pages project: `chameleon-finance`
-- Production URL: `https://chameleon-finance.pages.dev`
+- Production URL: `https://chameleon-finance-c4y.pages.dev`
 
 ## Product Positioning
 
-Chameleon is a local-first finance and subscription tracker with dashboards, budgets,
+OpenFinance is a local-first finance and subscription tracker with dashboards, budgets,
 Google Sheets import/sync, and optional Cloudflare backup.
 
 Current app-facing copy should stay focused on:
